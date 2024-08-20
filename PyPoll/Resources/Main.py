@@ -1,64 +1,58 @@
+#import libraries
 import os
 import csv
 
-election_data = os.path.join("election_data.csv")
+elecfile = os.path.join('Resources', 'election_data.csv')
 
-# Variables
-candidates = []
-num_votes = []
-percent_votes = []
-total_votes = 0
+with open(elecfile) as csvfile:
+    csvreader = csv.reader(csvfile)
+    header = next(csvreader)  # Skip header row
 
-with open(election_data, newline = "") as csvfile:
-    csvreader = csv.reader(csvfile, delimiter = ",")
-    csv_header = next(csvreader)
+    # Variables
+    total_votes = 0
+    candidate_votes = {}
+    winner = ""
+    max_votes = 0
 
+    # Reading through each row in the CSV file
     for row in csvreader:
-        # Add to our vote-counter 
-        total_votes += 1 
-     
-        if row[2] not in candidates:
-            candidates.append(row[2])
-            index = candidates.index(row[2])
-            num_votes.append(1)
+        total_votes += 1
+        candidate = row[2]
+
+        # Updating the candidate's vote count
+        if candidate in candidate_votes:
+            candidate_votes[candidate] += 1
         else:
-            index = candidates.index(row[2])
-            num_votes[index] += 1
-    
-    # Add to percent_votes list 
-    for votes in num_votes:
-        percentage = (votes/total_votes) * 100
-        percentage = round(percentage)
-        percentage = "%.3f%%" % percentage
-        percent_votes.append(percentage)
-    
-    # Find the winning candidate
-    winner = max(num_votes)
-    index = num_votes.index(winner)
-    winning_candidate = candidates[index]
+            candidate_votes[candidate] = 1
 
-# Displaying results
-print("Election Results")
-print("--------------------------")
-print(f"Total Votes: {str(total_votes)}")
-print("--------------------------")
-for i in range(len(candidates)):
-    print(f"{candidates[i]}: {str(percent_votes[i])} ({str(num_votes[i])})")
-print("--------------------------")
-print(f"Winner: {winning_candidate}")
-print("--------------------------")
+        # Updating the winner
+        if candidate_votes[candidate] > max_votes:
+            max_votes = candidate_votes[candidate]
+            winner = candidate
 
-# Exporting to .txt file
-output = open("output.txt", "w")
-line1 = "Election Results"
-line2 = "--------------------------"
-line3 = str(f"Total Votes: {str(total_votes)}")
-line4 = str("--------------------------")
-output.write('{}\n{}\n{}\n{}\n'.format(line1, line2, line3, line4))
-for i in range(len(candidates)):
-    line = str(f"{candidates[i]}: {str(percent_votes[i])} ({str(num_votes[i])})")
-    output.write('{}\n'.format(line))
-line5 = "--------------------------"
-line6 = str(f"Winner: {winning_candidate}")
-line7 = "--------------------------"
-output.write('{}\n{}\n{}\n'.format(line5, line6, line7))
+    # Calculating the percentage of votes each candidate received
+    vote_percentages = {candidate: (votes / total_votes) * 100 for candidate, votes in candidate_votes.items()}
+
+    # Printing results
+    print(f"Election Results")
+    print("-------------------------")
+    print(f"Total Votes: {total_votes}")
+    print("-------------------------")
+    for candidate, votes in candidate_votes.items():
+        percentage = round(vote_percentages[candidate], 3)
+        print(f"{candidate}: {percentage}% ({votes})")
+        print(f"-------------------------")
+    print(f"Winner: {winner}")
+
+
+with open('Analysis/election_results.txt', 'w') as output_file:
+    output_file.write("Election Results\n")
+    output_file.write("-------------------------\n")
+    output_file.write(f"Total Votes: {total_votes}\n")
+    output_file.write("-------------------------\n")
+    for candidate, votes in candidate_votes.items():
+        percentage = round(vote_percentages[candidate], 3)
+        output_file.write(f"{candidate}: {percentage}% ({votes})\n")
+    output_file.write("-------------------------\n")
+    output_file.write(f"Winner: {winner}\n")
+    
